@@ -13,23 +13,6 @@ services:
     volumes:
      - $PWD/container_data/mysql:/var/lib/mysql
 
-  spark:
-    build:
-      context: .
-      dockerfile: Dockerfile-spark
-    image: spark-shm:2.2.1
-    container_name: spark-shm
-    ports:
-     - "14040:4040"
-     - "18080:8080"
-    volumes:
-     - $PWD/conf/hive-site.xml:/opt/spark/conf/hive-site.xml
-     - $PWD/conf/spark/log4j.properties:/opt/spark/conf/log4j.properties
-     - $PWD/container_data/spark/warehouse:/shared_data/hive/warehouse
-     - $PWD/table_data:/shared_data/table_data
-    links:
-      - "mysql:mysql"
-
   hive:
     build:
       context: .
@@ -38,15 +21,16 @@ services:
     container_name: hive-shm
     ports:
      - "10000:10000"
+     - "9083:9083"
     volumes:
-     - $PWD/conf/hive-site.xml:/opt/hive/conf/hive-site.xml
+     - $PWD/conf/hive/hive-site.xml:/opt/hive/conf/hive-site.xml
      - $PWD/container_data/hive/warehouse:/shared_data/hive/warehouse
      - $PWD/table_data:/shared_data/table_data
     links:
       - "mysql:mysql"
 
   master:
-    image: 
+    image: gettyimages/spark 
     command: bin/spark-class org.apache.spark.deploy.master.Master -h master
     hostname: master
     environment:
@@ -68,6 +52,9 @@ services:
       - 8080:8080
     links:
       - "mysql:mysql"
+      - "hive:hive"
+    volumes:
+      - ./conf/spark/:/usr/spark-2.4.4/conf/
 
   worker:
     image: gettyimages/spark
